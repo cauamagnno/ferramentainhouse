@@ -2183,25 +2183,25 @@ export default function InHouseCalculator() {
                 </div>
 
                 {/* ---------- PÁGINA 2 ---------- */}
-                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col bg-black overflow-hidden">
+                <div className="w-[1280px] h-[1810px] px-16 py-10 relative flex flex-col bg-black overflow-hidden">
 
                   {/* Cabeçalho página 2 */}
-                  <div className="flex justify-between items-center mb-8">
+                  <div className="flex justify-between items-center mb-5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="https://tqiqnxkncezmzublpdxg.supabase.co/storage/v1/object/public/img/logoinhouse.png"
                       alt="InHouse Market"
-                      className="h-14 object-contain object-left"
+                      className="h-12 object-contain object-left"
                       crossOrigin="anonymous"
                     />
-                    <p className="text-gray-500 text-lg font-bold tracking-widest uppercase">Continuação da Proposta</p>
+                    <p className="text-gray-500 text-base font-bold tracking-widest uppercase">Continuação da Proposta</p>
                   </div>
 
                   {/* DRE Section */}
-                  <div className="mb-10">
-                    <h3 className="text-orange-500 text-2xl font-black mb-6 uppercase tracking-wider">DRE — DEMONSTRATIVO DE RESULTADO PROJETADO</h3>
-                    <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/5 grid grid-cols-2 gap-16">
-                      <div className="space-y-4 text-xl">
+                  <div className="mb-6">
+                    <h3 className="text-orange-500 text-xl font-black mb-4 uppercase tracking-wider">DRE — DEMONSTRATIVO DE RESULTADO PROJETADO</h3>
+                    <div className="bg-[#1a1a1a] px-7 py-5 rounded-2xl border border-white/5 grid grid-cols-2 gap-10">
+                      <div className="space-y-3 text-lg">
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
                           <span>(+) Faturamento Bruto</span>
                           <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
@@ -2210,12 +2210,12 @@ export default function InHouseCalculator() {
                           <span>(-) CMV Implícito ({dreConfigs.cmv.valor}%)</span>
                           <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.cmv.valor) / 100)}</span>
                         </div>
-                        <div className="flex justify-between pt-2">
+                        <div className="flex justify-between pt-1">
                            <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto Comercial</span>
-                           <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.margemContribuicao)}</span>
+                           <span className="font-black text-green-400 text-xl">{formatCurrency(dreData.margemContribuicao)}</span>
                         </div>
                       </div>
-                      <div className="space-y-4 text-xl">
+                      <div className="space-y-3 text-lg">
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
                           <span>(-) Despesas Fixas Previstas</span>
                           <span className="font-bold text-orange-400">-{formatCurrency(dreConfigs.energia.valor + dreConfigs.limpeza.valor + dreConfigs.internet.valor)}</span>
@@ -2224,74 +2224,74 @@ export default function InHouseCalculator() {
                           <span>(-) Custos Variáveis + Royalties</span>
                           <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.mensalidadeInhouse.valor)/100 + (dreData.faturamentoMensal * dreConfigs.taxasBancarias.valor)/100)}</span>
                         </div>
-                        <div className="flex justify-between pt-2">
+                        <div className="flex justify-between pt-1">
                            <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
-                           <span className="font-black text-green-400 text-3xl">{formatCurrency(dreData.lucroLiquido)}</span>
+                           <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="text-orange-500 text-4xl font-black mb-10 uppercase tracking-widest">PLANILHA DE PAGAMENTOS (DESEMBOLSO)</h3>
-                  
-                  <div className="flex-1">
-                    <table className="w-full text-2xl text-left border-collapse">
+                  <h3 className="text-orange-500 text-2xl font-black mb-4 uppercase tracking-widest">PLANILHA DE PAGAMENTOS (DESEMBOLSO)</h3>
+
+                  <div className="flex-1 overflow-hidden">
+                    <table className="w-full text-lg text-left border-collapse">
                       <thead>
-                        <tr className="text-gray-500 text-sm uppercase tracking-widest border-b-2 border-white/10">
-                          <th className="py-6 px-4">FASE / NATUREZA</th>
-                          <th className="py-6 px-4">MATURIDADE / PARCELA</th>
-                          <th className="py-6 px-4 text-right">VALOR FINAL</th>
+                        <tr className="text-gray-500 text-xs uppercase tracking-widest border-b-2 border-white/10">
+                          <th className="py-3 px-4">FASE / NATUREZA</th>
+                          <th className="py-3 px-4">MATURIDADE / PARCELA</th>
+                          <th className="py-3 px-4 text-right">VALOR FINAL</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="bg-orange-500/10">
-                          <td className="py-6 px-4 font-black text-orange-500 text-2xl uppercase" colSpan={2}>Licenciamento</td>
-                          <td className="py-6 px-4 text-right font-black text-orange-500 text-2xl">
+                          <td className="py-4 px-4 font-black text-orange-500 text-xl uppercase" colSpan={2}>Licenciamento</td>
+                          <td className="py-4 px-4 text-right font-black text-orange-500 text-xl">
                             {pagamentoLicenca === 'vista' ? formatCurrency(valorLicencaFinal) : 'Ato Inicial'}
                           </td>
                         </tr>
                         {pagamentoLicenca === "vista" ? (
                           <tr className="border-b border-white/5 bg-[#121212]">
-                            <td className="py-5 px-4 text-gray-300 pl-16">Licenciamento à vista com desconto</td>
-                            <td className="py-5 px-4 text-gray-400">Imediato</td>
-                            <td className="py-5 px-4 text-right font-bold">{formatCurrency(valorLicencaFinal)}</td>
+                            <td className="py-3 px-4 text-gray-300 pl-12">Licenciamento à vista com desconto</td>
+                            <td className="py-3 px-4 text-gray-400">Imediato</td>
+                            <td className="py-3 px-4 text-right font-bold">{formatCurrency(valorLicencaFinal)}</td>
                           </tr>
                         ) : (
                           <>
                             <tr className="border-b border-white/5 bg-[#121212]">
-                              <td className="py-5 px-4 text-gray-300 pl-16">Entrada de Licenciamento</td>
-                              <td className="py-5 px-4 text-gray-400">Ato Inicial ({percentualEntradaLicenca}%)</td>
-                              <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(valorLicencaBase * (percentualEntradaLicenca / 100))}</td>
+                              <td className="py-3 px-4 text-gray-300 pl-12">Entrada de Licenciamento</td>
+                              <td className="py-3 px-4 text-gray-400">Ato Inicial ({percentualEntradaLicenca}%)</td>
+                              <td className="py-3 px-4 text-right font-bold text-white">{formatCurrency(valorLicencaBase * (percentualEntradaLicenca / 100))}</td>
                             </tr>
                             {Array.from({ length: numParcelasLicenca }).map((_, i) => (
                               <tr key={i} className={`border-b border-white/5 ${i % 2 === 0 ? 'bg-black' : 'bg-[#121212]'}`}>
-                                <td className="py-5 px-4 text-gray-400 pl-16 text-xl">Licenciamento (Amortização)</td>
-                                <td className="py-5 px-4 text-gray-400">Parcela {i + 1}/{numParcelasLicenca}</td>
-                                <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency((valorLicencaBase * (1 - percentualEntradaLicenca/100)) / numParcelasLicenca)}</td>
+                                <td className="py-3 px-4 text-gray-400 pl-12">Licenciamento (Amortização)</td>
+                                <td className="py-3 px-4 text-gray-400">Parcela {i + 1}/{numParcelasLicenca}</td>
+                                <td className="py-3 px-4 text-right font-bold text-white">{formatCurrency((valorLicencaBase * (1 - percentualEntradaLicenca/100)) / numParcelasLicenca)}</td>
                               </tr>
                             ))}
                           </>
                         )}
 
                         <tr className="bg-orange-500/10">
-                          <td className="py-6 px-4 font-black text-orange-500 text-2xl uppercase" colSpan={2}>
+                          <td className="py-4 px-4 font-black text-orange-500 text-xl uppercase" colSpan={2}>
                             MONTAGEM & INSTALAÇÃO {pagamentoMontagem !== 'vista' && `(FINANCIADA EM ${pagamentoMontagem})`}
                           </td>
-                          <td className="py-6 px-4 text-right font-black text-orange-500 text-2xl">{formatCurrency(valorMontagemTotal)}</td>
+                          <td className="py-4 px-4 text-right font-black text-orange-500 text-xl">{formatCurrency(valorMontagemTotal)}</td>
                         </tr>
                         {pagamentoMontagem === "vista" ? (
                           <tr className="border-b border-white/5 bg-[#121212]">
-                            <td className="py-5 px-4 text-gray-300 pl-16">Montagem e Equipamentos à vista</td>
-                            <td className="py-5 px-4 text-gray-400">Pós-Obra</td>
-                            <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(valorMontagemTotal)}</td>
+                            <td className="py-3 px-4 text-gray-300 pl-12">Montagem e Equipamentos à vista</td>
+                            <td className="py-3 px-4 text-gray-400">Pós-Obra</td>
+                            <td className="py-3 px-4 text-right font-bold text-white">{formatCurrency(valorMontagemTotal)}</td>
                           </tr>
                         ) : (() => {
                           const numP = parseInt(pagamentoMontagem.replace("x", ""))
                           return Array.from({ length: numP }).map((_, i) => (
                             <tr key={i} className={`border-b border-white/5 ${i % 2 === 0 ? 'bg-[#121212]' : 'bg-black'}`}>
-                              <td className="py-5 px-4 text-gray-400 pl-16 text-xl">Capex (Instalações)</td>
-                              <td className="py-5 px-4 text-gray-400">Parcela {i + 1}/{numP}</td>
-                              <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(calcularParcelaMontagem(valorMontagemTotal, numP))}</td>
+                              <td className="py-3 px-4 text-gray-400 pl-12">Capex (Instalações)</td>
+                              <td className="py-3 px-4 text-gray-400">Parcela {i + 1}/{numP}</td>
+                              <td className="py-3 px-4 text-right font-bold text-white">{formatCurrency(calcularParcelaMontagem(valorMontagemTotal, numP))}</td>
                             </tr>
                           ))
                         })()}
@@ -2300,20 +2300,20 @@ export default function InHouseCalculator() {
                   </div>
 
                   {/* Footers e Avisos */}
-                  <div className="mt-10">
-                    <div className="bg-[#1a1a1a] p-8 rounded-2xl border border-white/5">
-                      <h4 className="text-gray-400 font-bold uppercase text-xs tracking-widest mb-3">AVISO LEGAL</h4>
-                      <p className="text-gray-500 text-sm leading-relaxed">
+                  <div className="mt-5">
+                    <div className="bg-[#1a1a1a] px-6 py-4 rounded-2xl border border-white/5">
+                      <h4 className="text-gray-400 font-bold uppercase text-xs tracking-widest mb-2">AVISO LEGAL</h4>
+                      <p className="text-gray-500 text-xs leading-relaxed">
                         Os valores de faturamento e lucro apresentados nesta proposta representam projeções estimativas elaboradas com base no histórico performático atual da nossa rede de franqueados e licenciados no mesmo segmento. Fatores mercadológicos, empenho gestional, demografia local e variações em custos indiretos podem influenciar fortemente a performance real da operação, não existindo promessa ou garantia de resultados fixos pré-determinados.
                       </p>
                     </div>
 
-                    <div className="mt-16 flex justify-between items-end">
+                    <div className="mt-5 flex justify-between items-end">
                       <div className="text-gray-500 text-sm font-bold tracking-widest uppercase">
                         INHOUSE MARKET © {new Date().getFullYear()}
                       </div>
                       <div className="text-right">
-                        <p className="text-orange-500 font-bold text-xl">inhousemarket.com.br</p>
+                        <p className="text-orange-500 font-bold text-lg">inhousemarket.com.br</p>
                       </div>
                     </div>
                   </div>
