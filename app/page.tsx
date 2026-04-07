@@ -2019,7 +2019,7 @@ export default function InHouseCalculator() {
               <div ref={slideRef} className="w-[1280px] mx-auto bg-[#0a0a0a] text-white font-sans flex flex-col shadow-2xl">
                 
                 {/* ---------- PÁGINA 1 ---------- */}
-                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col gap-12 bg-black border-b-2 border-white/10">
+                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col gap-12 bg-black border-b-2 border-white/10 overflow-hidden">
                   <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[20%] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none"></div>
                   
                   {/* Cabeçalho */}
@@ -2184,11 +2184,28 @@ export default function InHouseCalculator() {
                     </div>
                   </div>
 
-                  {/* DRE Section (v2 layout) */}
-                  <div className="mt-auto pb-10">
+                </div>
+
+                {/* ---------- PÁGINA 2 ---------- */}
+                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col bg-black overflow-hidden">
+
+                  {/* Cabeçalho página 2 */}
+                  <div className="flex justify-between items-center mb-8">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="https://tqiqnxkncezmzublpdxg.supabase.co/storage/v1/object/public/img/logoinhouse.png"
+                      alt="InHouse Market"
+                      className="h-14 object-contain object-left"
+                      crossOrigin="anonymous"
+                    />
+                    <p className="text-gray-500 text-lg font-bold tracking-widest uppercase">Continuação da Proposta</p>
+                  </div>
+
+                  {/* DRE Section */}
+                  <div className="mb-10">
                     <h3 className="text-orange-500 text-2xl font-black mb-6 uppercase tracking-wider">DRE — DEMONSTRATIVO DE RESULTADO PROJETADO</h3>
-                    <div className="bg-[#1a1a1a] p-10 rounded-3xl border border-white/5 grid grid-cols-2 gap-16">
-                      <div className="space-y-5 text-2xl">
+                    <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/5 grid grid-cols-2 gap-16">
+                      <div className="space-y-4 text-xl">
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
                           <span>(+) Faturamento Bruto</span>
                           <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
@@ -2197,12 +2214,12 @@ export default function InHouseCalculator() {
                           <span>(-) CMV Implícito ({dreConfigs.cmv.valor}%)</span>
                           <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.cmv.valor) / 100)}</span>
                         </div>
-                        <div className="flex justify-between pt-4">
+                        <div className="flex justify-between pt-2">
                            <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto Comercial</span>
-                           <span className="font-black text-green-400 text-3xl">{formatCurrency(dreData.margemContribuicao)}</span>
+                           <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.margemContribuicao)}</span>
                         </div>
                       </div>
-                      <div className="space-y-5 text-2xl">
+                      <div className="space-y-4 text-xl">
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
                           <span>(-) Despesas Fixas Previstas</span>
                           <span className="font-bold text-orange-400">-{formatCurrency(dreConfigs.energia.valor + dreConfigs.limpeza.valor + dreConfigs.internet.valor)}</span>
@@ -2211,17 +2228,14 @@ export default function InHouseCalculator() {
                           <span>(-) Custos Variáveis + Royalties</span>
                           <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.mensalidadeInhouse.valor)/100 + (dreData.faturamentoMensal * dreConfigs.taxasBancarias.valor)/100)}</span>
                         </div>
-                        <div className="flex justify-between pt-4">
+                        <div className="flex justify-between pt-2">
                            <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
-                           <span className="font-black text-green-400 text-4xl">{formatCurrency(dreData.lucroLiquido)}</span>
+                           <span className="font-black text-green-400 text-3xl">{formatCurrency(dreData.lucroLiquido)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* ---------- PÁGINA 2 ---------- */}
-                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col bg-black">
                   <h3 className="text-orange-500 text-4xl font-black mb-10 uppercase tracking-widest">PLANILHA DE PAGAMENTOS (DESEMBOLSO)</h3>
                   
                   <div className="flex-1">
