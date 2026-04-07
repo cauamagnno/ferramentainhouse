@@ -299,7 +299,6 @@ export default function InHouseCalculator() {
       internet +
       energia +
       limpeza +
-      limpeza +
       repasse +
       mensalidadeInhouse +
       das +
@@ -309,7 +308,7 @@ export default function InHouseCalculator() {
       veiculosCombustivel
     const lucroLiquido = lucrobruto - custosFixos
 
-    const payback = investimentoTotal / lucroLiquido
+    const payback = lucroLiquido > 0 ? investimentoTotal / lucroLiquido : 0
     const roiAnual = lucroLiquido > 0 ? ((lucroLiquido * 12) / investimentoTotal) * 100 : 0
 
     return {
@@ -2210,26 +2209,26 @@ export default function InHouseCalculator() {
                           <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(-) CMV Implícito ({dreConfigs.cmv.valor}%)</span>
-                          <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.cmv.valor) / 100)}</span>
+                          <span>(-) CMV ({dreConfigs.cmv.valor}%)</span>
+                          <span className="font-bold text-orange-400">-{formatCurrency(dreData.custoVariavel)}</span>
                         </div>
                         <div className="flex justify-between pt-1">
-                           <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto Comercial</span>
-                           <span className="font-black text-green-400 text-xl">{formatCurrency(dreData.margemContribuicao)}</span>
+                          <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto</span>
+                          <span className="font-black text-green-400 text-xl">{formatCurrency(dreData.margemContribuicao)}</span>
                         </div>
                       </div>
                       <div className="space-y-3 text-lg">
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(-) Despesas Fixas Previstas</span>
-                          <span className="font-bold text-orange-400">-{formatCurrency(dreConfigs.energia.valor + dreConfigs.limpeza.valor + dreConfigs.internet.valor)}</span>
+                          <span>(-) Total Custos e Despesas</span>
+                          <span className="font-bold text-orange-400">-{formatCurrency(dreData.custosFixos)}</span>
                         </div>
                         <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(-) Custos Variáveis + Royalties</span>
-                          <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.mensalidadeInhouse.valor)/100 + (dreData.faturamentoMensal * dreConfigs.taxasBancarias.valor)/100)}</span>
+                          <span>Payback estimado</span>
+                          <span className="font-bold text-white">{dreData.payback > 0 ? `${dreData.payback.toFixed(1)} meses` : '—'}</span>
                         </div>
                         <div className="flex justify-between pt-1">
-                           <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
-                           <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido)}</span>
+                          <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
+                          <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido)}</span>
                         </div>
                       </div>
                     </div>
