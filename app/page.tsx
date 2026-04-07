@@ -54,13 +54,10 @@ export default function InHouseCalculator() {
         format: [width, pageHeightPx]
       })
 
-      // Primeira Página
-      pdf.addImage(imgData, "PNG", 0, 0, width, totalHeight)
-      
-      // Segunda Página (se houver conteúdo)
-      if (totalHeight > pageHeightPx + 100) {
-        pdf.addPage([width, pageHeightPx], "p")
-        pdf.addImage(imgData, "PNG", 0, -pageHeightPx, width, totalHeight)
+      const numPages = Math.ceil(totalHeight / pageHeightPx)
+      for (let i = 0; i < numPages; i++) {
+        if (i > 0) pdf.addPage([width, pageHeightPx], "p")
+        pdf.addImage(imgData, "PNG", 0, -i * pageHeightPx, width, totalHeight)
       }
 
       pdf.save(`proposta_inhouse_${clienteName.replace(/\s+/g, "_").toLowerCase()}.pdf`)
@@ -2027,9 +2024,14 @@ export default function InHouseCalculator() {
                   
                   {/* Cabeçalho */}
                   <div className="flex justify-between items-start pt-4">
-                    <div className="flex flex-col">
-                      <h1 className="text-6xl font-black tracking-tighter text-white">InHouse</h1>
-                      <p className="text-gray-500 text-xl font-bold tracking-widest mt-[-8px]">MARKET</p>
+                    <div className="flex flex-col justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="https://tqiqnxkncezmzublpdxg.supabase.co/storage/v1/object/public/img/logoinhouse.png"
+                        alt="InHouse Market"
+                        className="h-20 object-contain object-left"
+                        crossOrigin="anonymous"
+                      />
                     </div>
                     <div className="text-right">
                       <h1 className="text-7xl font-extrabold text-orange-500 tracking-tight leading-none mb-2">PROPOSTA</h1>
