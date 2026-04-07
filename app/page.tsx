@@ -2019,114 +2019,110 @@ export default function InHouseCalculator() {
               <div ref={slideRef} className="w-[1280px] mx-auto bg-[#0a0a0a] text-white font-sans flex flex-col shadow-2xl">
                 
                 {/* ---------- PÁGINA 1 ---------- */}
-                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col gap-12 bg-black border-b-2 border-white/10 overflow-hidden">
+                <div className="w-[1280px] h-[1810px] px-16 py-10 relative flex flex-col gap-5 bg-black border-b-2 border-white/10 overflow-hidden">
                   <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[20%] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none"></div>
-                  
+
                   {/* Cabeçalho */}
-                  <div className="flex justify-between items-start pt-4">
+                  <div className="flex justify-between items-center">
                     <div className="flex flex-col justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="https://tqiqnxkncezmzublpdxg.supabase.co/storage/v1/object/public/img/logoinhouse.png"
                         alt="InHouse Market"
-                        className="h-20 object-contain object-left"
+                        className="h-16 object-contain object-left"
                         crossOrigin="anonymous"
                       />
                     </div>
                     <div className="text-right">
-                      <h1 className="text-7xl font-extrabold text-orange-500 tracking-tight leading-none mb-2">PROPOSTA</h1>
-                      <p className="text-gray-400 text-xl font-bold tracking-[0.2em] uppercase">SIMULAÇÃO OFICIAL EXECUTIVA</p>
+                      <h1 className="text-6xl font-extrabold text-orange-500 tracking-tight leading-none mb-1">PROPOSTA</h1>
+                      <p className="text-gray-400 text-lg font-bold tracking-[0.2em] uppercase">SIMULAÇÃO OFICIAL EXECUTIVA</p>
                     </div>
                   </div>
 
                   {/* Preparado Para Box */}
-                  <div className="bg-[#1a1a1a] p-8 rounded-2xl border border-white/5 mt-4">
-                     <p className="text-gray-400 text-xl">Preparado exclusivamente para: <strong className="text-white ml-2 text-3xl font-bold">{clienteName || "_________________"}</strong></p>
-                     <p className="text-orange-500 text-lg mt-4 font-bold uppercase tracking-widest">CONSULTOR: {vendedorName || "_________________"}</p>
+                  <div className="bg-[#1a1a1a] px-7 py-5 rounded-2xl border border-white/5">
+                     <p className="text-gray-400 text-lg">Preparado exclusivamente para: <strong className="text-white ml-2 text-2xl font-bold">{clienteName || "_________________"}</strong></p>
+                     <p className="text-orange-500 text-base mt-2 font-bold uppercase tracking-widest">CONSULTOR: {vendedorName || "_________________"}</p>
                   </div>
 
                   {/* Linha 1: Investimento e Retorno */}
-                  <div className="grid grid-cols-2 gap-10 mt-4">
+                  <div className="grid grid-cols-2 gap-6">
                     {/* Resumo do Investimento */}
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-8 h-full">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                        RESUMO DO INVESTIMENTO
-                      </h3>
-                      <div className="space-y-6 text-2xl">
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">RESUMO DO INVESTIMENTO</h3>
+                      <div className="space-y-3 text-xl">
                         <div className="flex justify-between pb-2 border-b border-white/5">
                           <span className="text-gray-400">Total de Lojas:</span>
-                          <span className="font-bold text-white text-3xl">{numLojas}</span>
+                          <span className="font-bold text-white text-2xl">{numLojas}</span>
                         </div>
                         <div className="flex justify-between pb-2 border-b border-white/5">
                           <span className="text-gray-400">Licenciamento:</span>
-                          <span className="font-bold text-white text-3xl">{formatCurrency(valorLicencaBase)}</span>
+                          <span className="font-bold text-white text-2xl">{formatCurrency(valorLicencaBase)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Montagem e Equip.:</span>
-                          <span className="font-bold text-white text-3xl">{formatCurrency(valorMontagemTotal)}</span>
+                          <span className="font-bold text-white text-2xl">{formatCurrency(valorMontagemTotal)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Potencial de Retorno */}
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-8 h-full">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider flex items-center gap-3">
-                        POTENCIAL DE RETORNO
-                      </h3>
-                      <div className="space-y-6 text-2xl">
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">POTENCIAL DE RETORNO</h3>
+                      <div className="space-y-3 text-xl">
                         <div className="flex justify-between pb-2 border-b border-white/5">
                           <span className="text-gray-400">Base Atendida (Aptos):</span>
-                          <span className="font-bold text-white text-3xl">{numApartamentos}</span>
+                          <span className="font-bold text-white text-2xl">{numApartamentos}</span>
                         </div>
                         <div className="flex justify-between pb-2 border-b border-white/5">
                           <span className="text-gray-400">Faturamento Projetado:</span>
-                          <span className="font-bold text-white text-3xl">{formatCurrency(dreData.faturamentoMensal)}/mês</span>
+                          <span className="font-bold text-white text-2xl">{formatCurrency(dreData.faturamentoMensal)}/mês</span>
                         </div>
                         <div className="flex justify-between pb-2 border-b border-white/5">
                           <span className="text-gray-400">Lucro Bruto:</span>
-                          <span className="font-bold text-green-400 text-3xl">{formatCurrency(dreData.margemContribuicao)}</span>
+                          <span className="font-bold text-green-400 text-2xl">{formatCurrency(dreData.margemContribuicao)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Rentabilidade/Ano:</span>
-                          <span className="font-bold text-green-400 text-3xl">{formatCurrency(dreData.lucroLiquido * 12)}</span>
+                          <span className="font-bold text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido * 12)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Investimento Total Bar */}
-                  <div className="border-2 border-orange-500 p-8 rounded-2xl flex justify-between items-center bg-orange-500/5">
-                    <span className="text-white text-4xl font-extrabold uppercase">Investimento Total</span>
-                    <span className="text-orange-500 text-6xl font-black tracking-tight">{formatCurrency(investimentoTotal)}</span>
+                  <div className="border-2 border-orange-500 px-7 py-5 rounded-2xl flex justify-between items-center bg-orange-500/5">
+                    <span className="text-white text-3xl font-extrabold uppercase">Investimento Total</span>
+                    <span className="text-orange-500 text-5xl font-black tracking-tight">{formatCurrency(investimentoTotal)}</span>
                   </div>
 
-                  {/* Projeções de Faturamento (Novas caracteristicas solicitadas) */}
-                  <div className="space-y-6">
-                    <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">CENÁRIOS DE FATURAMENTO MENSAL (PROJEÇÃO)</h3>
-                    <div className="grid grid-cols-3 gap-6">
-                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-blue-500 shadow-lg">
-                            <p className="text-blue-400 font-black text-sm uppercase tracking-widest mb-1">CONSERVADOR</p>
-                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 80 / apto</p>
-                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 80 * numLojas)}</p>
+                  {/* Projeções de Faturamento */}
+                  <div className="space-y-3">
+                    <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">CENÁRIOS DE FATURAMENTO MENSAL (PROJEÇÃO)</h3>
+                    <div className="grid grid-cols-3 gap-5">
+                        <div className="bg-[#1a1a1a] px-6 py-5 rounded-2xl border-l-4 border-blue-500">
+                            <p className="text-blue-400 font-black text-xs uppercase tracking-widest mb-1">CONSERVADOR</p>
+                            <p className="text-gray-500 text-base mb-1">Ticket R$ 80 / apto</p>
+                            <p className="text-white text-2xl font-black">{formatCurrency(numApartamentos * 80 * numLojas)}</p>
                         </div>
-                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-orange-500 shadow-xl scale-105 transform">
-                            <p className="text-orange-500 font-black text-sm uppercase tracking-widest mb-1">REALISTA</p>
-                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 110 / apto</p>
-                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 110 * numLojas)}</p>
+                        <div className="bg-[#1a1a1a] px-6 py-5 rounded-2xl border-l-4 border-orange-500">
+                            <p className="text-orange-500 font-black text-xs uppercase tracking-widest mb-1">REALISTA</p>
+                            <p className="text-gray-500 text-base mb-1">Ticket R$ 110 / apto</p>
+                            <p className="text-white text-2xl font-black">{formatCurrency(numApartamentos * 110 * numLojas)}</p>
                         </div>
-                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-green-500 shadow-lg">
-                            <p className="text-green-500 font-black text-sm uppercase tracking-widest mb-1">OTIMISTA</p>
-                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 150 / apto</p>
-                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 150 * numLojas)}</p>
+                        <div className="bg-[#1a1a1a] px-6 py-5 rounded-2xl border-l-4 border-green-500">
+                            <p className="text-green-500 font-black text-xs uppercase tracking-widest mb-1">OTIMISTA</p>
+                            <p className="text-gray-500 text-base mb-1">Ticket R$ 150 / apto</p>
+                            <p className="text-white text-2xl font-black">{formatCurrency(numApartamentos * 150 * numLojas)}</p>
                         </div>
                     </div>
                   </div>
 
                   {/* Condições e Prazos */}
-                  <div className="grid grid-cols-2 gap-10">
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">CONDIÇÕES DE PAGAMENTO</h3>
-                      <div className="space-y-5 text-2xl">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">CONDIÇÕES DE PAGAMENTO</h3>
+                      <div className="space-y-3 text-xl">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Licenciamento:</span>
                           <span className="font-bold text-white uppercase">{pagamentoLicenca === 'vista' ? 'À vista' : `${percentualEntradaLicenca}% entrada + ${numParcelasLicenca}x`}</span>
@@ -2137,10 +2133,10 @@ export default function InHouseCalculator() {
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">PRAZOS E CRONOGRAMA</h3>
-                      <div className="space-y-5 text-2xl">
+
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">PRAZOS E CRONOGRAMA</h3>
+                      <div className="space-y-3 text-xl">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Entrega Estimada Padrão:</span>
                           <span className="font-bold text-white">45 a 60 dias</span>
@@ -2154,25 +2150,25 @@ export default function InHouseCalculator() {
                   </div>
 
                   {/* Equipamentos e Segmentos */}
-                  <div className="grid grid-cols-2 gap-10">
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6 flex-1">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">EQUIPAMENTOS INCLUSOS</h3>
-                      <ul className="space-y-3 text-xl text-gray-300">
-                        <li className="flex items-center gap-2">• Gôndolas metálicas completas (10 prateleiras)</li>
-                        <li className="flex items-center gap-2">• Cervejeira Fricon com controle Wi-Fi (220v)</li>
-                        <li className="flex items-center gap-2">• Refrigerador Fricon Wi-Fi (220v)</li>
-                        <li className="flex items-center gap-2">• Freezer Vertical Consu (220v)</li>
-                        <li className="flex items-center gap-2">• Checkout Totem, Balança, Scanner Bióptico</li>
-                        <li className="flex items-center gap-2">• Câmeras Intelbras com IA e DVR 16 canais</li>
-                        <li className="flex items-center gap-2">• Nobreak, Roteador e Sistema de Som</li>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">EQUIPAMENTOS INCLUSOS</h3>
+                      <ul className="space-y-2 text-lg text-gray-300">
+                        <li>• Gôndolas metálicas completas (10 prateleiras)</li>
+                        <li>• Cervejeira Fricon com controle Wi-Fi (220v)</li>
+                        <li>• Refrigerador Fricon Wi-Fi (220v)</li>
+                        <li>• Freezer Vertical Consu (220v)</li>
+                        <li>• Checkout Totem, Balança, Scanner Bióptico</li>
+                        <li>• Câmeras Intelbras com IA e DVR 16 canais</li>
+                        <li>• Nobreak, Roteador e Sistema de Som</li>
                         {equipamentosAdicionais.map((eq, i) => (
                            <li key={i} className="text-orange-300 font-semibold">• {eq.quantidade}x {eq.nome}</li>
                         ))}
                       </ul>
                     </div>
-                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6 flex-1">
-                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">SEGMENTO DE PRODUTOS</h3>
-                      <ul className="space-y-3 text-xl text-gray-300">
+                    <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">SEGMENTO DE PRODUTOS</h3>
+                      <ul className="space-y-2 text-lg text-gray-300">
                         <li>• Bebidas Não Alcoólicas (Refrigerantes, Águas)</li>
                         <li>• Mercearia Doce (Doces, Biscoitos, Chocolates)</li>
                         <li>• Mercearia Salgada (Salgadinhos, Aperitivos)</li>
