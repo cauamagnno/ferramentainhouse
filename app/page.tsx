@@ -8,8 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Settings, Download, Store, Wrench, PieChart, PlusCircle, Building2, Building, Hotel, Dumbbell, Plus, Trash2, MonitorPlay, CalendarDays, TrendingUp, CreditCard, Box, Package, Banknote, Laptop, GraduationCap, Megaphone } from "lucide-react"
-import domtoimage from "dom-to-image-more"
-import jsPDF from "jspdf"
 
 const formatCurrency = (value: number) => {
   if (value === undefined || value === null || isNaN(value)) {
@@ -28,10 +26,15 @@ export default function InHouseCalculator() {
     }
     if (!slideRef.current) return
     try {
+      const [{ default: domtoimage }, { default: jsPDF }] = await Promise.all([
+        import("dom-to-image-more"),
+        import("jspdf"),
+      ])
+
       const element = slideRef.current
       const width = 1280
+      const pageHeightPx = 1810
       const totalHeight = element.scrollHeight
-      const pageHeightPx = 1810 // Altura proporcional a 1280px para manter proporção A4
 
       const imgData = await domtoimage.toPng(element, {
         width: width,
@@ -41,7 +44,8 @@ export default function InHouseCalculator() {
           transformOrigin: "top left",
           margin: "0",
           backgroundColor: "#0a0a0a"
-        }
+        },
+        quality: 1
       })
 
       const pdf = new jsPDF({
@@ -50,19 +54,13 @@ export default function InHouseCalculator() {
         format: [width, pageHeightPx]
       })
 
-      let heightLeft = totalHeight
-      let position = 0
-
-      // Adiciona a primeira página
-      pdf.addImage(imgData, "PNG", 0, position, width, totalHeight)
-      heightLeft -= pageHeightPx
-
-      // Loop para adicionar novas páginas enquanto houver conteúdo
-      while (heightLeft > 0) {
-        position = position - pageHeightPx
+      // Primeira Página
+      pdf.addImage(imgData, "PNG", 0, 0, width, totalHeight)
+      
+      // Segunda Página (se houver conteúdo)
+      if (totalHeight > pageHeightPx + 100) {
         pdf.addPage([width, pageHeightPx], "p")
-        pdf.addImage(imgData, "PNG", 0, position, width, totalHeight)
-        heightLeft -= pageHeightPx
+        pdf.addImage(imgData, "PNG", 0, -pageHeightPx, width, totalHeight)
       }
 
       pdf.save(`proposta_inhouse_${clienteName.replace(/\s+/g, "_").toLowerCase()}.pdf`)
@@ -76,10 +74,12 @@ export default function InHouseCalculator() {
   const [vendedorName, setVendedorName] = useState("")
 
   const [numLojas, setNumLojas] = useState(1)
-  const [pagamentoLicenca, setPagamentoLicenca] = useState<"vista" | "50-10x" | "20-10x" | "30-10x">("vista")
+  const [pagamentoLicenca, setPagamentoLicenca] = useState<"vista" | "parcelado">("parcelado")
+  const [percentualEntradaLicenca, setPercentualEntradaLicenca] = useState(20)
+  const [numParcelasLicenca, setNumParcelasLicenca] = useState(10)
   const [dividirCartoes, setDividirCartoes] = useState(false)
   const [pagamentoMontagem, setPagamentoMontagem] = useState("vista")
-  const [ticketCompra, setTicketCompra] = useState(500)
+  const [ticketCompra, setTicketCompra] = useState(110)
   const [numApartamentos, setNumApartamentos] = useState(300)
   const [parcelasMontagem, setParcelasMontagem] = useState(1) // Estado adicionado para o número de parcelas de montagem
 
@@ -139,6 +139,16 @@ export default function InHouseCalculator() {
     }
   }
 
+  const valorLicencaBase = useMemo(() => 16000 + (numLojas - 1) * 6000, [numLojas])
+  
+  const valorLicencaFinal = useMemo(() => {
+    if (pagamentoLicenca === "vista") {
+      const desconto = numLojas === 1 ? 0.05 : 0.10
+      return valorLicencaBase * (1 - desconto)
+    }
+    return valorLicencaBase
+  }, [numLojas, pagamentoLicenca, valorLicencaBase])
+
   const valorMontagemBase = 24000 * numLojas
   const valorEquipamentosAdicionais = useMemo(
     () => equipamentosAdicionais.reduce((total, eq) => total + eq.valor * eq.quantidade, 0),
@@ -147,9 +157,8 @@ export default function InHouseCalculator() {
   const valorMontagemTotal = valorMontagemBase + valorEquipamentosAdicionais
 
   const investimentoTotal = useMemo(() => {
-    const valorLicenca = 16000 + (numLojas - 1) * 6000
-    return valorLicenca + valorMontagemTotal
-  }, [numLojas, valorMontagemTotal])
+    return valorLicencaFinal + valorMontagemTotal
+  }, [valorLicencaFinal, valorMontagemTotal])
 
   const adicionarEquipamento = () => {
     if (novoEquipamento.nome && novoEquipamento.valor > 0) {
@@ -334,6 +343,7 @@ export default function InHouseCalculator() {
     intervaloSegundaLoja,
     intervaloTerceiraLoja,
     percentualRepasse,
+    dreConfigs,
   ])
 
   return (
@@ -435,7 +445,7 @@ export default function InHouseCalculator() {
                       <span className="w-2 h-2 bg-orange-500/100 rounded-full"></span>
                       Forma de Pagamento - Licença
                     </Label>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <label className="flex items-center p-4 border-2 border-white/10 rounded-xl cursor-pointer hover:border-orange-300 transition-colors">
                         <input
                           type="radio"
@@ -450,91 +460,95 @@ export default function InHouseCalculator() {
                             <CreditCard className="text-gray-400 w-5 h-5" />
                           </div>
                           <div>
-                            <div className="font-semibold text-white">À vista</div>
-                            <div className="text-sm text-gray-400">Pagamento integral</div>
-                          </div>
-                        </div>
-                      </label>
-
-                      <label className="flex items-center p-4 border-2 border-white/10 rounded-xl cursor-pointer hover:border-orange-300 transition-colors">
-                        <input
-                          type="radio"
-                          name="pagamentoLicenca"
-                          value="50-10x"
-                          checked={pagamentoLicenca === "50-10x"}
-                          onChange={() => setPagamentoLicenca("50-10x")}
-                          className="w-5 h-5 text-orange-600 mr-4"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <CreditCard className="text-gray-400 w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white">50% + 10x no cartão</div>
-                            <div className="text-sm text-gray-400">Sem juros</div>
-                          </div>
-                        </div>
-                      </label>
-
-                      <label className="flex items-center p-4 border-2 border-white/10 rounded-xl cursor-pointer hover:border-orange-300 transition-colors">
-                        <input
-                          type="radio"
-                          name="pagamentoLicenca"
-                          value="20-10x"
-                          checked={pagamentoLicenca === "20-10x"}
-                          onChange={() => setPagamentoLicenca("20-10x")}
-                          className="w-5 h-5 text-orange-600 mr-4"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <CreditCard className="text-gray-400 w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white">20% + 10x no cartão</div>
-                            <div className="text-sm text-gray-400">Sem juros</div>
-                          </div>
-                        </div>
-                      </label>
-
-                      <label className="flex items-center p-4 border-2 border-white/10 rounded-xl cursor-pointer hover:border-orange-300 transition-colors">
-                        <input
-                          type="radio"
-                          name="pagamentoLicenca"
-                          value="30-10x"
-                          checked={pagamentoLicenca === "30-10x"}
-                          onChange={() => setPagamentoLicenca("30-10x")}
-                          className="w-5 h-5 text-orange-600 mr-4"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <CreditCard className="text-gray-400 w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white">30% + 10x com juros</div>
-                            <div className="text-sm text-gray-400">Juros de 3,99% a.m.</div>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-
-                    {(pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                      <div className="mt-4 p-4 bg-white/5 border-2 border-white/20 rounded-xl relative overflow-hidden">
-                        <label className="flex items-center cursor-pointer relative z-10">
-                          <input
-                            type="checkbox"
-                            checked={dividirCartoes}
-                            onChange={(e) => setDividirCartoes(e.target.checked)}
-                            className="w-5 h-5 text-orange-600 mr-4 rounded border-white/20 bg-transparent focus:ring-orange-500"
-                          />
-                          <div>
-                            <div className="font-semibold text-white">Dividir parcelas em 2 cartões</div>
+                            <div className="font-semibold text-white">À vista (com desconto)</div>
                             <div className="text-sm text-gray-400">
-                              Divida as parcelas igualmente entre dois cartões de crédito simultaneamente
+                              {numLojas === 1 ? "5% de desconto" : "10% de desconto"} - Total: {formatCurrency(valorLicencaFinal)}
                             </div>
                           </div>
-                        </label>
-                      </div>
-                    )}
+                        </div>
+                      </label>
+
+                      <label className="flex items-center p-4 border-2 border-white/10 rounded-xl cursor-pointer hover:border-orange-300 transition-colors">
+                        <input
+                          type="radio"
+                          name="pagamentoLicenca"
+                          value="parcelado"
+                          checked={pagamentoLicenca === "parcelado"}
+                          onChange={() => setPagamentoLicenca("parcelado")}
+                          className="w-5 h-5 text-orange-600 mr-4"
+                        />
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            <CreditCard className="text-gray-400 w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">Parcelado personalizado</div>
+                            <div className="text-sm text-gray-400">Sem juros</div>
+                          </div>
+                        </div>
+                      </label>
+
+                      {pagamentoLicenca === "parcelado" && (
+                        <div className="mt-4 p-6 bg-white/5 border border-white/10 rounded-xl space-y-6">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <Label className="text-sm font-semibold text-gray-300">Entrada ({percentualEntradaLicenca}%)</Label>
+                              <span className="text-orange-400 font-bold">{formatCurrency(valorLicencaBase * (percentualEntradaLicenca / 100))}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="10"
+                              max="50"
+                              step="5"
+                              value={percentualEntradaLicenca}
+                              onChange={(e) => setPercentualEntradaLicenca(Number(e.target.value))}
+                              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                            />
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>10%</span>
+                              <span>20%</span>
+                              <span>30%</span>
+                              <span>40%</span>
+                              <span>50%</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <Label className="text-sm font-semibold text-gray-300">Número de parcelas</Label>
+                            <Select value={numParcelasLicenca.toString()} onValueChange={(v) => setNumParcelasLicenca(Number(v))}>
+                              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                                  <SelectItem key={n} value={n.toString()}>{n}x sem juros</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <div className="text-xs text-gray-400 text-right">
+                              Parcelas de: <span className="text-white font-semibold">{formatCurrency((valorLicencaBase * (1 - percentualEntradaLicenca / 100)) / numParcelasLicenca)}</span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2">
+                            <label className="flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={dividirCartoes}
+                                onChange={(e) => setDividirCartoes(e.target.checked)}
+                                className="w-5 h-5 text-orange-600 mr-4 rounded border-white/20 bg-transparent focus:ring-orange-500"
+                              />
+                              <div>
+                                <div className="font-semibold text-white">Dividir parcelas em 2 cartões</div>
+                                <div className="text-xs text-gray-400">
+                                  Divida igualmente o saldo entre dois cartões
+                                </div>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -772,10 +786,10 @@ export default function InHouseCalculator() {
                         Fase 1 - Licenciamento
                       </div>
                       <div className="text-2xl font-bold text-orange-400 mb-1">
-                        {formatCurrency(16000 + (numLojas - 1) * 6000)}
+                        {formatCurrency(valorLicencaFinal)}
                       </div>
                       <div className="text-sm text-gray-400">
-                        {pagamentoLicenca === "vista" ? "À vista" : pagamentoLicenca}
+                        {pagamentoLicenca === "vista" ? "À vista" : `${percentualEntradaLicenca}% + ${numParcelasLicenca}x`}
                       </div>
                     </CardContent>
                   </Card>
@@ -862,7 +876,7 @@ export default function InHouseCalculator() {
                         <th className="text-left py-3 px-4 font-semibold">Fase</th>
                         <th className="text-left py-3 px-4 font-semibold">Parcela</th>
                         <th className="text-right py-3 px-4 font-semibold">Valor</th>
-                        {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
+                        {dividirCartoes && pagamentoLicenca === "parcelado" && (
                           <th className="text-right py-3 px-4 font-semibold">Dividido em 2 Cartões</th>
                         )}
                         <th className="text-left py-3 px-4 font-semibold">Data</th>
@@ -878,106 +892,47 @@ export default function InHouseCalculator() {
                           rows.push(
                             <tr key="licenca-vista" className="border-b hover:bg-orange-500/10">
                               <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                              <td className="py-3 px-4 text-gray-400 font-light italic">À Vista</td>
+                              <td className="py-3 px-4 text-gray-400 font-light italic">À Vista (com desconto)</td>
                               <td className="py-3 px-4 text-right font-bold text-orange-400">
-                                {formatCurrency(valorLicencaBase)}
+                                {formatCurrency(valorLicencaFinal)}
                               </td>
-                              {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
+                              {dividirCartoes && (
                                 <td className="py-3 px-4 text-right">-</td>
                               )}
                               <td className="py-3 px-4">Imediato</td>
                             </tr>,
                           )
-                        } else if (pagamentoLicenca === "50-10x") {
+                        } else {
+                          const valorEntrada = valorLicencaBase * (percentualEntradaLicenca / 100)
+                          const valorParceladoTotal = valorLicencaBase * (1 - percentualEntradaLicenca / 100)
+                          const valorParcela = valorParceladoTotal / numParcelasLicenca
+
                           rows.push(
-                            <tr key="licenca-50-3x-entrada" className="border-b hover:bg-orange-500/10">
+                            <tr key="licenca-entrada" className="border-b hover:bg-orange-500/10">
                               <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                              <td className="py-3 px-4 text-gray-400 font-light italic">Entrada (50%)</td>
+                              <td className="py-3 px-4 text-gray-400 font-light italic">Entrada ({percentualEntradaLicenca}%)</td>
                               <td className="py-3 px-4 text-right font-bold text-orange-400">
-                                {formatCurrency(valorLicencaBase * 0.5)}
+                                {formatCurrency(valorEntrada)}
                               </td>
                               {dividirCartoes && (
                                 <td className="py-3 px-4 text-right text-orange-400/80 italic font-light">
-                                  {formatCurrency((valorLicencaBase * 0.5) / 2)} cada
+                                  {formatCurrency(valorEntrada / 2)} cada
                                 </td>
                               )}
                               <td className="py-3 px-4">Imediato</td>
                             </tr>,
                           )
-                          for (let i = 0; i < 10; i++) {
-                            const valorParcela = (valorLicencaBase * 0.5) / 10
+
+                          for (let i = 0; i < numParcelasLicenca; i++) {
                             rows.push(
-                              <tr key={`licenca-50-10x-parcela-${i + 1}`} className="border-b hover:bg-orange-500/10">
+                              <tr key={`licenca-parcela-${i + 1}`} className="border-b hover:bg-orange-500/10">
                                 <td className="py-3 px-4">Licenciamento</td>
-                                <td className="py-3 px-4">Parcela {i + 1}/10</td>
+                                <td className="py-3 px-4">Parcela {i + 1}/{numParcelasLicenca}</td>
                                 <td className="py-3 px-4 text-right font-semibold">{formatCurrency(valorParcela)}</td>
                                 {dividirCartoes && (
                                   <td className="py-3 px-4 text-right text-blue-600">
                                     {formatCurrency(valorParcela / 2)} cada
                                   </td>
-                                )}
-                                <td className="py-3 px-4">Mês {i + 1}</td>
-                              </tr>,
-                            )
-                          }
-                        } else if (pagamentoLicenca === "20-10x") {
-                          rows.push(
-                            <tr key="licenca-20-3x-entrada" className="border-b hover:bg-orange-500/10">
-                              <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                              <td className="py-3 px-4 text-gray-400 font-light italic">Entrada (20%)</td>
-                              <td className="py-3 px-4 text-right font-bold text-orange-400">
-                                {formatCurrency(valorLicencaBase * 0.2)}
-                              </td>
-                              {dividirCartoes && (
-                                <td className="py-3 px-4 text-right text-blue-600">
-                                  {formatCurrency((valorLicencaBase * 0.2) / 2)} cada
-                                </td>
-                              )}
-                              <td className="py-3 px-4">Imediato</td>
-                            </tr>,
-                          )
-                          for (let i = 0; i < 10; i++) {
-                            const valorParcela = (valorLicencaBase * 0.8) / 10
-                            rows.push(
-                              <tr key={`licenca-20-10x-parcela-${i + 1}`} className="border-b hover:bg-orange-500/10">
-                                <td className="py-3 px-4">Licenciamento</td>
-                                <td className="py-3 px-4">Parcela {i + 1}/10</td>
-                                <td className="py-3 px-4 text-right font-semibold">{formatCurrency(valorParcela)}</td>
-                                {dividirCartoes && (
-                                  <td className="py-3 px-4 text-right text-blue-600">
-                                    {formatCurrency(valorParcela / 2)} cada
-                                  </td>
-                                )}
-                                <td className="py-3 px-4">Mês {i + 1}</td>
-                              </tr>,
-                            )
-                          }
-                        } else if (pagamentoLicenca === "30-10x") {
-                          rows.push(
-                            <tr key="licenca-30-10x-entrada" className="border-b hover:bg-orange-500/10">
-                              <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                              <td className="py-3 px-4 text-gray-400 font-light italic">Entrada (30%)</td>
-                              <td className="py-3 px-4 text-right font-bold text-orange-400">
-                                {formatCurrency(valorLicencaBase * 0.3)}
-                              </td>
-                              {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                                <td className="py-3 px-4 text-right">-</td>
-                              )}
-                              <td className="py-3 px-4">Imediato</td>
-                            </tr>,
-                          )
-                          const valorRestante = valorLicencaBase * 0.7
-                          const parcelaComJuros = calcularParcelaComJuros(valorRestante, 10, 3.99)
-                          for (let i = 0; i < 10; i++) {
-                            rows.push(
-                              <tr key={`licenca-30-10x-parcela-${i + 1}`} className="border-b hover:bg-orange-500/10">
-                                <td className="py-3 px-4">Licenciamento</td>
-                                <td className="py-3 px-4">Parcela {i + 1}/10</td>
-                                <td className="py-3 px-4 text-right font-semibold">
-                                  {formatCurrency(parcelaComJuros)}
-                                </td>
-                                {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                                  <td className="py-3 px-4 text-right">-</td>
                                 )}
                                 <td className="py-3 px-4">Mês {i + 1}</td>
                               </tr>,
@@ -994,7 +949,7 @@ export default function InHouseCalculator() {
                               <td className="py-3 px-4 text-right font-bold text-orange-400">
                                 {formatCurrency(valorMontagemTotal)}
                               </td>
-                              {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
+                              {dividirCartoes && pagamentoLicenca === "parcelado" && (
                                 <td className="py-3 px-4 text-right">-</td>
                               )}
                               <td className="py-3 px-4">Após aprovação</td>
@@ -1013,7 +968,7 @@ export default function InHouseCalculator() {
                                 <td className="py-3 px-4 text-right font-semibold">
                                   {formatCurrency(valorParcelaMontagem)}
                                 </td>
-                                {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
+                                {dividirCartoes && pagamentoLicenca === "parcelado" && (
                                   <td className="py-3 px-4 text-right">-</td>
                                 )}
                                 <td className="py-3 px-4">Mês {i + 1} (após aprovação)</td>
@@ -1027,7 +982,7 @@ export default function InHouseCalculator() {
                   </table>
                 </div>
 
-                {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
+                {dividirCartoes && pagamentoLicenca === "parcelado" && (
                   <div className="mt-4 p-4 bg-orange-500/5 rounded-lg border border-orange-500/20">
                     <div className="flex items-center gap-3 text-orange-400">
                       <CreditCard className="w-5 h-5 flex-shrink-0" />
@@ -2063,117 +2018,132 @@ export default function InHouseCalculator() {
             </div>
             
             {/* Slide Container para PDF (Largura fixada em 1280px e altura dinâmica) */}
-            <div className="w-full overflow-x-auto scroller px-2 pb-4">
-              <div ref={slideRef} className="bg-[#0a0a0a] min-w-[1280px] w-[1280px] h-auto min-h-[720px] p-12 relative flex flex-col gap-10 border-2 border-white/10 rounded-xl shadow-2xl mx-auto overflow-hidden">
-                {/* Background Ambient Layers inside slide */}
-                <div className="absolute top-[-5%] left-[-10%] w-[50%] h-[20%] bg-orange-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-                <div className="absolute bottom-[-5%] right-[-10%] w-[30%] h-[20%] bg-orange-800/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-                {/* Cabeçalho */}
-                <div className="flex justify-between items-start border-b border-white/10 pb-8 relative z-10 shrink-0">
-                  <img src="https://tqiqnxkncezmzublpdxg.supabase.co/storage/v1/object/public/img/logoinhouse.png" alt="InHouse Logo" className="h-20" />
-                  <div className="text-right">
-                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 tracking-tight">PROPOSTA COMERCIAL</h1>
-                    <p className="text-gray-400 text-xl font-light tracking-widest mt-2 uppercase">Simulação Oficial Executiva</p>
+            <div className="w-full overflow-x-auto scroller px-2 pb-10">
+              <div ref={slideRef} className="w-[1280px] mx-auto bg-[#0a0a0a] text-white font-sans flex flex-col shadow-2xl">
+                
+                {/* ---------- PÁGINA 1 ---------- */}
+                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col gap-12 bg-black border-b-2 border-white/10">
+                  <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[20%] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+                  
+                  {/* Cabeçalho */}
+                  <div className="flex justify-between items-start pt-4">
+                    <div className="flex flex-col">
+                      <h1 className="text-6xl font-black tracking-tighter text-white">InHouse</h1>
+                      <p className="text-gray-500 text-xl font-bold tracking-widest mt-[-8px]">MARKET</p>
+                    </div>
+                    <div className="text-right">
+                      <h1 className="text-7xl font-extrabold text-orange-500 tracking-tight leading-none mb-2">PROPOSTA</h1>
+                      <p className="text-gray-400 text-xl font-bold tracking-[0.2em] uppercase">SIMULAÇÃO OFICIAL EXECUTIVA</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="bg-orange-500/10 p-5 rounded-xl border border-orange-500/20 text-center tracking-wide mt-2 mb-4 shrink-0 relative z-10">
-                   <p className="text-gray-300 text-2xl font-light">Preparado exclusivamente para: <strong className="text-white ml-2 text-3xl font-semibold">{clienteName || "_________________"}</strong></p>
-                   <p className="text-orange-400 text-lg mt-3 font-semibold uppercase tracking-widest">Consultor: {vendedorName || "_________________"}</p>
-                </div>
-
-                {/* Corpo do Doc */}
-                <div className="flex flex-col gap-10 flex-1 relative z-10">
+                  {/* Preparado Para Box */}
+                  <div className="bg-[#1a1a1a] p-8 rounded-2xl border border-white/5 mt-4">
+                     <p className="text-gray-400 text-xl">Preparado exclusivamente para: <strong className="text-white ml-2 text-3xl font-bold">{clienteName || "_________________"}</strong></p>
+                     <p className="text-orange-500 text-lg mt-4 font-bold uppercase tracking-widest">CONSULTOR: {vendedorName || "_________________"}</p>
+                  </div>
 
                   {/* Linha 1: Investimento e Retorno */}
-                  <div className="grid grid-cols-2 gap-12">
-                    {/* Coluna Esquerda: Investimento */}
-                    <div className="space-y-8 flex flex-col">
-                      <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 flex-1">
-                        <h3 className="text-orange-500 text-2xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                          <Banknote className="w-6 h-6" /> Resumo do Investimento
-                        </h3>
-                        <div className="space-y-6 text-2xl font-light">
-                          <div className="flex justify-between border-b border-white/5 pb-3">
-                            <span className="text-gray-400">Total de Lojas:</span>
-                            <span className="font-bold text-white">{numLojas}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-3">
-                            <span className="text-gray-400">Licenciamento:</span>
-                            <span className="font-bold text-white">{formatCurrency(16000 + (numLojas - 1) * 6000)}</span>
-                          </div>
-                          <div className="flex justify-between pb-2">
-                            <span className="text-gray-400">Montagem e Equip:</span>
-                            <span className="font-bold text-white">{formatCurrency(24000 * numLojas + valorEquipamentosAdicionais)}</span>
-                          </div>
-                          
-                          <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/10 p-6 rounded-xl mt-8 border border-orange-500/30">
-                            <div className="flex justify-between font-bold text-3xl text-orange-400">
-                              <span>Investimento Total</span>
-                              <span>{formatCurrency(investimentoTotal)}</span>
-                            </div>
-                          </div>
+                  <div className="grid grid-cols-2 gap-10 mt-4">
+                    {/* Resumo do Investimento */}
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-8 h-full">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider flex items-center gap-3">
+                        RESUMO DO INVESTIMENTO
+                      </h3>
+                      <div className="space-y-6 text-2xl">
+                        <div className="flex justify-between pb-2 border-b border-white/5">
+                          <span className="text-gray-400">Total de Lojas:</span>
+                          <span className="font-bold text-white text-3xl">{numLojas}</span>
+                        </div>
+                        <div className="flex justify-between pb-2 border-b border-white/5">
+                          <span className="text-gray-400">Licenciamento:</span>
+                          <span className="font-bold text-white text-3xl">{formatCurrency(valorLicencaBase)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Montagem e Equip.:</span>
+                          <span className="font-bold text-white text-3xl">{formatCurrency(valorMontagemTotal)}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Coluna Direita: DRE e Por Que InHouse */}
-                    <div className="space-y-8 flex flex-col">
-                      <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 flex-1">
-                        <h3 className="text-green-500 text-2xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                          <TrendingUp className="w-6 h-6" /> Potencial de Retorno
-                        </h3>
-                        <div className="space-y-6 text-2xl font-light">
-                          <div className="flex justify-between border-b border-white/5 pb-3">
-                            <span className="text-gray-400">Base Atendida (Aptos):</span>
-                            <span className="font-bold text-white">{numApartamentos}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-3">
-                            <span className="text-gray-400">Faturamento Projetado:</span>
-                            <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}/mês</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-3">
-                            <span className="text-gray-400">Lucro Bruto:</span>
-                            <span className="font-bold text-green-400">{formatCurrency(dreData.margemContribuicao)}</span>
-                          </div>
-                          <div className="flex justify-between pb-3 mt-4">
-                            <span className="text-gray-400">Rentabilidade Estimada/Ano:</span>
-                            <span className="font-bold text-green-400">{formatCurrency(dreData.lucroLiquido * 12)}</span>
-                          </div>
+                    {/* Potencial de Retorno */}
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-8 h-full">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider flex items-center gap-3">
+                        POTENCIAL DE RETORNO
+                      </h3>
+                      <div className="space-y-6 text-2xl">
+                        <div className="flex justify-between pb-2 border-b border-white/5">
+                          <span className="text-gray-400">Base Atendida (Aptos):</span>
+                          <span className="font-bold text-white text-3xl">{numApartamentos}</span>
+                        </div>
+                        <div className="flex justify-between pb-2 border-b border-white/5">
+                          <span className="text-gray-400">Faturamento Projetado:</span>
+                          <span className="font-bold text-white text-3xl">{formatCurrency(dreData.faturamentoMensal)}/mês</span>
+                        </div>
+                        <div className="flex justify-between pb-2 border-b border-white/5">
+                          <span className="text-gray-400">Lucro Bruto:</span>
+                          <span className="font-bold text-green-400 text-3xl">{formatCurrency(dreData.margemContribuicao)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Rentabilidade/Ano:</span>
+                          <span className="font-bold text-green-400 text-3xl">{formatCurrency(dreData.lucroLiquido * 12)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Linha 2: Condições e Cronograma */}
-                  <div className="grid grid-cols-2 gap-12">
-                    <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-orange-400 text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <CreditCard className="w-5 h-5" /> Condições de Pagamento
-                      </h3>
-                      <div className="space-y-4 text-xl font-light">
-                        <div className="flex justify-between border-b border-white/5 pb-3">
-                          <span className="text-gray-400">Licenciamento:</span>
-                          <span className="font-bold text-white uppercase">{pagamentoLicenca.replace('-', ' em ')}</span>
+                  {/* Investimento Total Bar */}
+                  <div className="border-2 border-orange-500 p-8 rounded-2xl flex justify-between items-center bg-orange-500/5">
+                    <span className="text-white text-4xl font-extrabold uppercase">Investimento Total</span>
+                    <span className="text-orange-500 text-6xl font-black tracking-tight">{formatCurrency(investimentoTotal)}</span>
+                  </div>
+
+                  {/* Projeções de Faturamento (Novas caracteristicas solicitadas) */}
+                  <div className="space-y-6">
+                    <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">CENÁRIOS DE FATURAMENTO MENSAL (PROJEÇÃO)</h3>
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-blue-500 shadow-lg">
+                            <p className="text-blue-400 font-black text-sm uppercase tracking-widest mb-1">CONSERVADOR</p>
+                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 80 / apto</p>
+                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 80 * numLojas)}</p>
                         </div>
-                        <div className="flex justify-between pb-3">
-                          <span className="text-gray-400">Montagem e Equip:</span>
-                          <span className="font-bold text-white uppercase">{pagamentoMontagem.replace('-', ' em ')} {pagamentoMontagem !== 'vista' ? parcelasMontagem + 'x' : ''}</span>
+                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-orange-500 shadow-xl scale-105 transform">
+                            <p className="text-orange-500 font-black text-sm uppercase tracking-widest mb-1">REALISTA</p>
+                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 110 / apto</p>
+                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 110 * numLojas)}</p>
+                        </div>
+                        <div className="bg-[#1a1a1a] p-8 rounded-2xl border-l-4 border-green-500 shadow-lg">
+                            <p className="text-green-500 font-black text-sm uppercase tracking-widest mb-1">OTIMISTA</p>
+                            <p className="text-gray-500 text-lg mb-2">Ticket R$ 150 / apto</p>
+                            <p className="text-white text-3xl font-black">{formatCurrency(numApartamentos * 150 * numLojas)}</p>
+                        </div>
+                    </div>
+                  </div>
+
+                  {/* Condições e Prazos */}
+                  <div className="grid grid-cols-2 gap-10">
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">CONDIÇÕES DE PAGAMENTO</h3>
+                      <div className="space-y-5 text-2xl">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Licenciamento:</span>
+                          <span className="font-bold text-white uppercase">{pagamentoLicenca === 'vista' ? 'À vista' : `${percentualEntradaLicenca}% entrada + ${numParcelasLicenca}x`}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Montagem e Equip.:</span>
+                          <span className="font-bold text-white uppercase">{pagamentoMontagem === 'vista' ? 'À vista' : `${pagamentoMontagem} pós-obra`}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-white text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <CalendarDays className="w-5 h-5" /> Prazos e Cronograma
-                      </h3>
-                      <div className="space-y-4 text-xl font-light">
-                        <div className="flex justify-between border-b border-white/5 pb-3">
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">PRAZOS E CRONOGRAMA</h3>
+                      <div className="space-y-5 text-2xl">
+                        <div className="flex justify-between">
                           <span className="text-gray-400">Entrega Estimada Padrão:</span>
                           <span className="font-bold text-white">45 a 60 dias</span>
                         </div>
-                        <div className="flex justify-between pb-3">
+                        <div className="flex justify-between">
                           <span className="text-gray-400">Início de Maturidade Comercial:</span>
                           <span className="font-bold text-white">{tempoMaturacao} Meses</span>
                         </div>
@@ -2181,209 +2151,162 @@ export default function InHouseCalculator() {
                     </div>
                   </div>
 
-                  {/* Linha 3: Equipamentos e Produtos */}
-                  <div className="grid grid-cols-2 gap-12">
-                    <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-orange-400 text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <Wrench className="w-5 h-5" /> Equipamentos Inclusos
-                      </h3>
-                      <ul className="list-disc list-inside space-y-2 text-lg text-gray-300">
-                        <li>Gôndolas metálicas completas (10 prateleiras)</li>
-                        <li>Cervejeira Fricon com controle Wi-Fi (220v)</li>
-                        <li>Refrigerador Fricon Wi-Fi (220v)</li>
-                        <li>Freezer Vertical Consu (220v)</li>
-                        <li>Checkout Totem Completo, Balança, Scanner Bióptico</li>
-                        <li>Câmeras Intelbras com IA e DVR 16 canais</li>
-                        <li>Nobreak, Roteador e Sistema de Som Integrado</li>
+                  {/* Equipamentos e Segmentos */}
+                  <div className="grid grid-cols-2 gap-10">
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6 flex-1">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">EQUIPAMENTOS INCLUSOS</h3>
+                      <ul className="space-y-3 text-xl text-gray-300">
+                        <li className="flex items-center gap-2">• Gôndolas metálicas completas (10 prateleiras)</li>
+                        <li className="flex items-center gap-2">• Cervejeira Fricon com controle Wi-Fi (220v)</li>
+                        <li className="flex items-center gap-2">• Refrigerador Fricon Wi-Fi (220v)</li>
+                        <li className="flex items-center gap-2">• Freezer Vertical Consu (220v)</li>
+                        <li className="flex items-center gap-2">• Checkout Totem, Balança, Scanner Bióptico</li>
+                        <li className="flex items-center gap-2">• Câmeras Intelbras com IA e DVR 16 canais</li>
+                        <li className="flex items-center gap-2">• Nobreak, Roteador e Sistema de Som</li>
                         {equipamentosAdicionais.map((eq, i) => (
-                           <li key={i} className="text-orange-300 font-semibold">{eq.quantidade}x {eq.nome}</li>
+                           <li key={i} className="text-orange-300 font-semibold">• {eq.quantidade}x {eq.nome}</li>
                         ))}
                       </ul>
                     </div>
-                    
-                    <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-white text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <Package className="w-5 h-5" /> Segmento de Produtos
-                      </h3>
-                      <ul className="list-disc list-inside space-y-2 text-lg text-gray-300">
-                        <li>Bebidas Não Alcoólicas (Refrigerantes, Águas)</li>
-                        <li>Mercearia Doce (Doces, Biscoitos, Chocolates)</li>
-                        <li>Mercearia Salgada (Salgadinhos, Aperitivos)</li>
-                        <li>Bomboniere e Sorvetes Diversos</li>
-                        <li>Itens de Adega, Vinhos e Bebidas Premium</li>
-                        <li>Higiene Pessoal, Limpeza e Pet Shop</li>
-                        <li>Tabacaria e Produtos Especiais</li>
+                    <div className="bg-[#151515] p-10 rounded-3xl border border-white/5 space-y-6 flex-1">
+                      <h3 className="text-orange-500 text-2xl font-black uppercase tracking-wider">SEGMENTO DE PRODUTOS</h3>
+                      <ul className="space-y-3 text-xl text-gray-300">
+                        <li>• Bebidas Não Alcoólicas (Refrigerantes, Águas)</li>
+                        <li>• Mercearia Doce (Doces, Biscoitos, Chocolates)</li>
+                        <li>• Mercearia Salgada (Salgadinhos, Aperitivos)</li>
+                        <li>• Bomboniere e Sorvetes Diversos</li>
+                        <li>• Adega, Vinhos e Bebidas Premium</li>
+                        <li>• Higiene Pessoal, Limpeza e Pet Shop</li>
+                        <li>• Tabacaria e Produtos Especiais</li>
                       </ul>
                     </div>
                   </div>
 
-                  {/* Linha 4: DRE Resumido de 1 Mês Completo */}
-                  <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-green-500 text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <PieChart className="w-5 h-5" /> DRE - Demonstrativo de Resultado Projetado
-                      </h3>
-                      <div className="grid grid-cols-2 gap-8 text-xl font-light">
-                        <div className="space-y-4">
-                          <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                            <span>(+) Faturamento Bruto</span>
-                            <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                            <span>(-) CMV Implícito ({dreConfigs.cmv.valor}%)</span>
-                            <span className="font-bold text-red-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.cmv.valor) / 100)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                            <span>(-) Impostos DAS ({dreConfigs.das.valor}R$)</span>
-                            <span className="font-bold text-red-400">-{formatCurrency(dreConfigs.das.valor)}</span>
-                          </div>
-                          <div className="flex justify-between pt-2">
-                             <span className="text-gray-300">(=) Lucro Bruto Comercial</span>
-                             <span className="font-bold text-green-400">{formatCurrency(dreData.margemContribuicao)}</span>
-                          </div>
+                  {/* DRE Section (v2 layout) */}
+                  <div className="mt-auto pb-10">
+                    <h3 className="text-orange-500 text-2xl font-black mb-6 uppercase tracking-wider">DRE — DEMONSTRATIVO DE RESULTADO PROJETADO</h3>
+                    <div className="bg-[#1a1a1a] p-10 rounded-3xl border border-white/5 grid grid-cols-2 gap-16">
+                      <div className="space-y-5 text-2xl">
+                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
+                          <span>(+) Faturamento Bruto</span>
+                          <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
                         </div>
-                        <div className="space-y-4 border-l border-white/10 pl-8">
-                          <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                            <span>(-) Despesas Fixas Previstas</span>
-                            <span className="font-bold text-red-400">-{formatCurrency(dreConfigs.energia.valor + dreConfigs.limpeza.valor + dreConfigs.internet.valor)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                            <span>(-) Custos Variáveis (Taxas + Royalties)</span>
-                            <span className="font-bold text-red-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.mensalidadeInhouse.valor)/100 + (dreData.faturamentoMensal * dreConfigs.taxasBancarias.valor)/100)}</span>
-                          </div>
-                          <div className="flex justify-between pt-4 mt-2 border-t border-white/20">
-                             <span className="text-white font-bold uppercase">Resultado Líquido (Mês)</span>
-                             <span className="font-bold text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido)}</span>
-                          </div>
+                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
+                          <span>(-) CMV Implícito ({dreConfigs.cmv.valor}%)</span>
+                          <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.cmv.valor) / 100)}</span>
+                        </div>
+                        <div className="flex justify-between pt-4">
+                           <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto Comercial</span>
+                           <span className="font-black text-green-400 text-3xl">{formatCurrency(dreData.margemContribuicao)}</span>
                         </div>
                       </div>
-                  </div>
-
-                  {/* Linha 5: Cronograma Estratégico de Pagamentos */}
-                  <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10">
-                      <h3 className="text-orange-400 text-xl font-bold mb-6 uppercase tracking-widest flex items-center gap-3">
-                        <CalendarDays className="w-5 h-5" /> Planilha de Pagamentos (Desembolso)
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-lg font-light text-gray-300 text-left">
-                          <thead>
-                            <tr className="border-b-2 border-white/10 text-gray-400 text-sm uppercase tracking-wider">
-                              <th className="py-3 px-4">Fase / Natureza</th>
-                              <th className="py-3 px-4">Maturidade / Parcela</th>
-                              <th className="py-3 px-4 text-right">Valor Final</th>
-                              {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                                <th className="py-3 px-4 text-right text-gray-500">Divisão Opcional (Cartão)</th>
-                              )}
-                              <th className="py-3 px-4 text-right">Percurso Financeiro</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(() => {
-                              const rows = []
-                              const valorLicencaBase = 16000 + (numLojas - 1) * 6000
-
-                              // Lógica Licenciamento
-                              if (pagamentoLicenca === "vista") {
-                                rows.push(
-                                  <tr key="licenca-vista" className="border-b border-white/5 hover:bg-white/5">
-                                    <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                                    <td className="py-3 px-4">À Vista</td>
-                                    <td className="py-3 px-4 text-right font-bold text-orange-400">{formatCurrency(valorLicencaBase)}</td>
-                                    {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (<td className="py-3 px-4 text-right">-</td>)}
-                                    <td className="py-3 px-4 text-right">Assinatura de Contrato</td>
-                                  </tr>
-                                )
-                              } else {
-                                const splitMap: Record<string, number> = { "50-10x": 0.5, "20-10x": 0.2, "30-10x": 0.3 }
-                                const percEntrada = splitMap[pagamentoLicenca] || 0
-                                rows.push(
-                                  <tr key="licenca-entrada" className="border-b border-white/5 hover:bg-white/5 mt-2">
-                                    <td className="py-3 px-4 font-semibold text-white">Licenciamento</td>
-                                    <td className="py-3 px-4">Ato Inicial ({percEntrada * 100}%)</td>
-                                    <td className="py-3 px-4 text-right font-bold text-orange-400">{formatCurrency(valorLicencaBase * percEntrada)}</td>
-                                    {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                                      <td className="py-3 px-4 text-right text-gray-400">{formatCurrency((valorLicencaBase * percEntrada) / 2)}</td>
-                                    )}
-                                    <td className="py-3 px-4 text-right">Assinatura de Contrato</td>
-                                  </tr>
-                                )
-                                
-                                const valorRestante = valorLicencaBase * (1 - percEntrada)
-                                const valorParcela = pagamentoLicenca === "30-10x" ? calcularParcelaComJuros(valorRestante, 10, 3.99) : valorRestante / 10
-
-                                for (let i = 0; i < 10; i++) {
-                                  rows.push(
-                                    <tr key={`licenca-parcela-${i}`} className="border-b border-white/5 hover:bg-white/5 mx-2 text-base text-gray-400">
-                                      <td className="py-2 px-4 pl-8 border-l border-white/10">Licenciamento (Amortização)</td>
-                                      <td className="py-2 px-4">Parcela {i + 1}/10</td>
-                                      <td className="py-2 px-4 text-right text-orange-300">{formatCurrency(valorParcela)}</td>
-                                      {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (
-                                        <td className="py-2 px-4 text-right text-gray-500">{formatCurrency(valorParcela / 2)}</td>
-                                      )}
-                                      <td className="py-2 px-4 text-right">Mês {i + 1}</td>
-                                    </tr>
-                                  )
-                                }
-                              }
-
-                              // Lógica Montagem
-                              if (pagamentoMontagem === "vista") {
-                                rows.push(
-                                  <tr key="montagem-vista" className="border-b border-white/5 hover:bg-white/5">
-                                    <td className="py-3 px-4 font-semibold text-white mt-4 border-t border-white/20">Montagem & Instalação</td>
-                                    <td className="py-3 px-4 mt-4 border-t border-white/20">À Vista</td>
-                                    <td className="py-3 px-4 text-right font-bold text-gray-100 mt-4 border-t border-white/20">{formatCurrency(valorMontagemTotal)}</td>
-                                    {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (<td className="py-3 px-4 text-right mt-4 border-t border-white/20">-</td>)}
-                                    <td className="py-3 px-4 text-right mt-4 border-t border-white/20">Liberação de Obras</td>
-                                  </tr>
-                                )
-                              } else {
-                                const nStr = pagamentoMontagem.replace("x", "")
-                                const numP = parseInt(nStr)
-                                const vParcelaMontagem = calcularParcelaMontagem(valorMontagemTotal, numP)
-                                
-                                rows.push(
-                                  <tr key="montagem-header" className="hover:bg-white/5">
-                                    <td className="py-3 px-4 font-semibold text-white mt-4 border-t border-white/20" colSpan={dividirCartoes ? 5 : 4}>
-                                       <div className="flex items-center gap-2 text-orange-400 uppercase tracking-widest text-sm">
-                                         <Wrench className="w-4 h-4" /> Montagem & Instalação (Financiada em {numP}x)
-                                       </div>
-                                    </td>
-                                  </tr>
-                                )
-
-                                for (let i = 0; i < numP; i++) {
-                                  rows.push(
-                                    <tr key={`montagem-parcela-${i}`} className="border-b border-white/5 hover:bg-white/5 mx-2 text-base text-gray-400">
-                                      <td className="py-2 px-4 pl-8 border-l border-white/10">Capex (Instalações)</td>
-                                      <td className="py-2 px-4">Parcela {i + 1}/{numP}</td>
-                                      <td className="py-2 px-4 text-right text-gray-300">{formatCurrency(vParcelaMontagem)}</td>
-                                      {dividirCartoes && (pagamentoLicenca === "50-10x" || pagamentoLicenca === "20-10x") && (<td className="py-2 px-4 text-right">-</td>)}
-                                      <td className="py-2 px-4 text-right">Mês {i + 1} Pós Obra</td>
-                                    </tr>
-                                  )
-                                }
-                              }
-
-                              return rows
-                            })()}
-                          </tbody>
-                        </table>
+                      <div className="space-y-5 text-2xl">
+                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
+                          <span>(-) Despesas Fixas Previstas</span>
+                          <span className="font-bold text-orange-400">-{formatCurrency(dreConfigs.energia.valor + dreConfigs.limpeza.valor + dreConfigs.internet.valor)}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
+                          <span>(-) Custos Variáveis + Royalties</span>
+                          <span className="font-bold text-orange-400">-{formatCurrency((dreData.faturamentoMensal * dreConfigs.mensalidadeInhouse.valor)/100 + (dreData.faturamentoMensal * dreConfigs.taxasBancarias.valor)/100)}</span>
+                        </div>
+                        <div className="flex justify-between pt-4">
+                           <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
+                           <span className="font-black text-green-400 text-4xl">{formatCurrency(dreData.lucroLiquido)}</span>
+                        </div>
                       </div>
+                    </div>
                   </div>
-
                 </div>
 
-                {/* Footer do Slide */}
-                <div className="border-t border-white/10 pt-6 flex justify-between items-start text-xs text-gray-500 relative z-10 mt-8 gap-10 leading-relaxed font-light">
+                {/* ---------- PÁGINA 2 ---------- */}
+                <div className="w-[1280px] h-[1810px] p-20 relative flex flex-col bg-black">
+                  <h3 className="text-orange-500 text-4xl font-black mb-10 uppercase tracking-widest">PLANILHA DE PAGAMENTOS (DESEMBOLSO)</h3>
+                  
                   <div className="flex-1">
-                     <p className="font-bold uppercase tracking-widest text-orange-400 mb-2">Aviso Legal</p>
-                     <p>Os valores de faturamento e lucro apresentados nesta proposta representam <strong>projeções estimativas</strong> elaboradas com base no histórico performático atual da nossa rede de franqueados e licenciados no mesmo segmento. Fatores mercadológicos, empenho gestional, demografia local e variações em custos indiretos podem influenciar fortemente a performance real da operação, não existindo promessa ou garantia de resultados fixos pré-determinados.</p>
+                    <table className="w-full text-2xl text-left border-collapse">
+                      <thead>
+                        <tr className="text-gray-500 text-sm uppercase tracking-widest border-b-2 border-white/10">
+                          <th className="py-6 px-4">FASE / NATUREZA</th>
+                          <th className="py-6 px-4">MATURIDADE / PARCELA</th>
+                          <th className="py-6 px-4 text-right">VALOR FINAL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="bg-orange-500/10">
+                          <td className="py-6 px-4 font-black text-orange-500 text-2xl uppercase" colSpan={2}>Licenciamento</td>
+                          <td className="py-6 px-4 text-right font-black text-orange-500 text-2xl">
+                            {pagamentoLicenca === 'vista' ? formatCurrency(valorLicencaFinal) : 'Ato Inicial'}
+                          </td>
+                        </tr>
+                        {pagamentoLicenca === "vista" ? (
+                          <tr className="border-b border-white/5 bg-[#121212]">
+                            <td className="py-5 px-4 text-gray-300 pl-16">Licenciamento à vista com desconto</td>
+                            <td className="py-5 px-4 text-gray-400">Imediato</td>
+                            <td className="py-5 px-4 text-right font-bold">{formatCurrency(valorLicencaFinal)}</td>
+                          </tr>
+                        ) : (
+                          <>
+                            <tr className="border-b border-white/5 bg-[#121212]">
+                              <td className="py-5 px-4 text-gray-300 pl-16">Entrada de Licenciamento</td>
+                              <td className="py-5 px-4 text-gray-400">Ato Inicial ({percentualEntradaLicenca}%)</td>
+                              <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(valorLicencaBase * (percentualEntradaLicenca / 100))}</td>
+                            </tr>
+                            {Array.from({ length: numParcelasLicenca }).map((_, i) => (
+                              <tr key={i} className={`border-b border-white/5 ${i % 2 === 0 ? 'bg-black' : 'bg-[#121212]'}`}>
+                                <td className="py-5 px-4 text-gray-400 pl-16 text-xl">Licenciamento (Amortização)</td>
+                                <td className="py-5 px-4 text-gray-400">Parcela {i + 1}/{numParcelasLicenca}</td>
+                                <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency((valorLicencaBase * (1 - percentualEntradaLicenca/100)) / numParcelasLicenca)}</td>
+                              </tr>
+                            ))}
+                          </>
+                        )}
+
+                        <tr className="bg-orange-500/10">
+                          <td className="py-6 px-4 font-black text-orange-500 text-2xl uppercase" colSpan={2}>
+                            MONTAGEM & INSTALAÇÃO {pagamentoMontagem !== 'vista' && `(FINANCIADA EM ${pagamentoMontagem})`}
+                          </td>
+                          <td className="py-6 px-4 text-right font-black text-orange-500 text-2xl">{formatCurrency(valorMontagemTotal)}</td>
+                        </tr>
+                        {pagamentoMontagem === "vista" ? (
+                          <tr className="border-b border-white/5 bg-[#121212]">
+                            <td className="py-5 px-4 text-gray-300 pl-16">Montagem e Equipamentos à vista</td>
+                            <td className="py-5 px-4 text-gray-400">Pós-Obra</td>
+                            <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(valorMontagemTotal)}</td>
+                          </tr>
+                        ) : (() => {
+                          const numP = parseInt(pagamentoMontagem.replace("x", ""))
+                          return Array.from({ length: numP }).map((_, i) => (
+                            <tr key={i} className={`border-b border-white/5 ${i % 2 === 0 ? 'bg-[#121212]' : 'bg-black'}`}>
+                              <td className="py-5 px-4 text-gray-400 pl-16 text-xl">Capex (Instalações)</td>
+                              <td className="py-5 px-4 text-gray-400">Parcela {i + 1}/{numP}</td>
+                              <td className="py-5 px-4 text-right font-bold text-white">{formatCurrency(calcularParcelaMontagem(valorMontagemTotal, numP))}</td>
+                            </tr>
+                          ))
+                        })()}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="text-right font-bold uppercase tracking-widest shrink-0">
-                    <p className="text-white mb-1 text-sm tracking-widest">InHouse Market © {new Date().getFullYear()}</p>
-                    <p className="text-orange-500">inhousemarket.com.br</p>
+
+                  {/* Footers e Avisos */}
+                  <div className="mt-10">
+                    <div className="bg-[#1a1a1a] p-8 rounded-2xl border border-white/5">
+                      <h4 className="text-gray-400 font-bold uppercase text-xs tracking-widest mb-3">AVISO LEGAL</h4>
+                      <p className="text-gray-500 text-sm leading-relaxed">
+                        Os valores de faturamento e lucro apresentados nesta proposta representam projeções estimativas elaboradas com base no histórico performático atual da nossa rede de franqueados e licenciados no mesmo segmento. Fatores mercadológicos, empenho gestional, demografia local e variações em custos indiretos podem influenciar fortemente a performance real da operação, não existindo promessa ou garantia de resultados fixos pré-determinados.
+                      </p>
+                    </div>
+
+                    <div className="mt-16 flex justify-between items-end">
+                      <div className="text-gray-500 text-sm font-bold tracking-widest uppercase">
+                        INHOUSE MARKET © {new Date().getFullYear()}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-orange-500 font-bold text-xl">inhousemarket.com.br</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
             </div>
           </TabsContent>
