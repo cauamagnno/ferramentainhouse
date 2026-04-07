@@ -32,12 +32,13 @@ export default function InHouseCalculator() {
       ])
 
       const element = slideRef.current
-      const width = 1280
-      const pageHeightPx = 1810
+      // A4 a 150 DPI: 1240 × 1754px
+      const pageWidthPx = 1240
+      const pageHeightPx = 1754
       const totalHeight = element.scrollHeight
 
       const imgData = await domtoimage.toPng(element, {
-        width: width,
+        width: pageWidthPx,
         height: totalHeight,
         style: {
           transform: "scale(1)",
@@ -48,16 +49,18 @@ export default function InHouseCalculator() {
         quality: 1
       })
 
+      // jsPDF com formato A4 nativo (210 × 297 mm)
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "px",
-        format: [width, pageHeightPx]
+        unit: "mm",
+        format: "a4"
       })
 
       const numPages = Math.ceil(totalHeight / pageHeightPx)
       for (let i = 0; i < numPages; i++) {
-        if (i > 0) pdf.addPage([width, pageHeightPx], "p")
-        pdf.addImage(imgData, "PNG", 0, -i * pageHeightPx, width, totalHeight)
+        if (i > 0) pdf.addPage("a4", "p")
+        // Imagem ocupa a página inteira (210mm × 297mm)
+        pdf.addImage(imgData, "PNG", 0, -i * 297, 210, (totalHeight / pageHeightPx) * 297)
       }
 
       pdf.save(`proposta_inhouse_${clienteName.replace(/\s+/g, "_").toLowerCase()}.pdf`)
@@ -2016,10 +2019,10 @@ export default function InHouseCalculator() {
             
             {/* Slide Container para PDF (Largura fixada em 1280px e altura dinâmica) */}
             <div className="w-full overflow-x-auto scroller px-2 pb-10">
-              <div ref={slideRef} className="w-[1280px] mx-auto bg-[#0a0a0a] text-white font-sans flex flex-col shadow-2xl">
+              <div ref={slideRef} className="w-[1240px] mx-auto bg-[#0a0a0a] text-white font-sans flex flex-col shadow-2xl">
                 
                 {/* ---------- PÁGINA 1 ---------- */}
-                <div className="w-[1280px] h-[1810px] px-16 py-10 relative flex flex-col gap-5 bg-black border-b-2 border-white/10 overflow-hidden">
+                <div className="w-[1240px] h-[1754px] px-16 py-10 relative flex flex-col gap-5 bg-black border-b-2 border-white/10 overflow-hidden">
                   <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[20%] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none"></div>
 
                   {/* Cabeçalho */}
@@ -2183,7 +2186,7 @@ export default function InHouseCalculator() {
                 </div>
 
                 {/* ---------- PÁGINA 2 ---------- */}
-                <div className="w-[1280px] h-[1810px] px-16 py-10 relative flex flex-col bg-black overflow-hidden">
+                <div className="w-[1240px] h-[1754px] px-16 py-10 relative flex flex-col bg-black overflow-hidden">
 
                   {/* Cabeçalho página 2 */}
                   <div className="flex justify-between items-center mb-5">
