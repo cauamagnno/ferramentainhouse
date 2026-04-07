@@ -2140,8 +2140,8 @@ export default function InHouseCalculator() {
                       <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">PRAZOS E CRONOGRAMA</h3>
                       <div className="space-y-3 text-xl">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Entrega Estimada Padrão:</span>
-                          <span className="font-bold text-white">45 a 60 dias</span>
+                          <span className="text-gray-400">Média estimada de ativação:</span>
+                          <span className="font-bold text-white">60 a 90 dias</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Início de Maturidade Comercial:</span>
@@ -2154,7 +2154,7 @@ export default function InHouseCalculator() {
                   {/* Equipamentos e Segmentos */}
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-[#151515] px-7 py-6 rounded-2xl border border-white/5 space-y-4">
-                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">EQUIPAMENTOS INCLUSOS</h3>
+                      <h3 className="text-orange-500 text-xl font-black uppercase tracking-wider">SUGESTÕES DE EQUIPAMENTOS</h3>
                       <ul className="space-y-2 text-lg text-gray-300">
                         <li>• Gôndolas metálicas completas (10 prateleiras)</li>
                         <li>• Cervejeira Fricon com controle Wi-Fi (220v)</li>
@@ -2202,39 +2202,35 @@ export default function InHouseCalculator() {
                   {/* DRE Section */}
                   <div className="mb-6">
                     <h3 className="text-orange-500 text-xl font-black mb-4 uppercase tracking-wider">DRE — DEMONSTRATIVO DE RESULTADO PROJETADO</h3>
-                    <div className="bg-[#1a1a1a] px-7 py-5 rounded-2xl border border-white/5 grid grid-cols-2 gap-10">
-                      <div className="space-y-3 text-lg">
-                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(+) Faturamento Bruto</span>
-                          <span className="font-bold text-white">{formatCurrency(dreData.faturamentoMensal)}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(-) CMV ({dreConfigs.cmv.valor}%)</span>
-                          <span className="font-bold text-orange-400">-{formatCurrency(dreData.custoVariavel)}</span>
-                        </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-gray-300 font-bold uppercase">(=) Lucro Bruto</span>
-                          <span className="font-black text-green-400 text-xl">{formatCurrency(dreData.margemContribuicao)}</span>
-                        </div>
+                    <div className="bg-[#1a1a1a] px-7 py-5 rounded-2xl border border-white/5 space-y-3 text-lg">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3 text-gray-400">
+                        <span>(+) Faturamento Bruto Mensal</span>
+                        <span className="font-bold text-white whitespace-nowrap ml-4">{formatCurrency(dreData.faturamentoMensal)}</span>
                       </div>
-                      <div className="space-y-3 text-lg">
-                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>(-) Total Custos e Despesas</span>
-                          <span className="font-bold text-orange-400">-{formatCurrency(dreData.custosFixos)}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-white/5 pb-2 text-gray-400">
-                          <span>Payback estimado</span>
-                          <span className="font-bold text-white">{dreData.payback > 0 ? `${dreData.payback.toFixed(1)} meses` : '—'}</span>
-                        </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-white font-black uppercase">Result. Líquido (Mês)</span>
-                          <span className="font-black text-green-400 text-2xl">{formatCurrency(dreData.lucroLiquido)}</span>
-                        </div>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3 text-gray-400">
+                        <span>(-) CMV — Custo da Mercadoria Vendida ({dreConfigs.cmv.valor}%)</span>
+                        <span className="font-bold text-orange-400 whitespace-nowrap ml-4">-{formatCurrency(dreData.custoVariavel)}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                        <span className="text-gray-300 font-bold">(=) Lucro Bruto Comercial</span>
+                        <span className="font-black text-green-400 text-xl whitespace-nowrap ml-4">{formatCurrency(dreData.margemContribuicao)}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3 text-gray-400">
+                        <span>(-) Total de Custos e Despesas Operacionais</span>
+                        <span className="font-bold text-orange-400 whitespace-nowrap ml-4">-{formatCurrency(dreData.custosFixos)}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3 text-gray-400">
+                        <span>Payback estimado</span>
+                        <span className="font-bold text-white whitespace-nowrap ml-4">{dreData.payback > 0 ? `${dreData.payback.toFixed(1)} meses` : '—'}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="text-white font-black uppercase text-xl">(=) Resultado Líquido Mensal</span>
+                        <span className="font-black text-green-400 text-2xl whitespace-nowrap ml-4">{formatCurrency(dreData.lucroLiquido)}</span>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="text-orange-500 text-2xl font-black mb-4 uppercase tracking-widest">PLANILHA DE PAGAMENTOS (DESEMBOLSO)</h3>
+                  <h3 className="text-orange-500 text-2xl font-black mb-4 uppercase tracking-widest">CRONOGRAMA DE PARCELAMENTO</h3>
 
                   <div className="flex-1 overflow-hidden">
                     <table className="w-full text-lg text-left border-collapse">
